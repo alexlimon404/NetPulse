@@ -1,6 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-FileCopyrightText: 2024 alexlimon404 <https://github.com/alexlimon404>
 /*
  * NetPulse - net_speed_layout_menu_item.js
  * A single row in the drop-down menu showing device name, speeds, IPs.
+ *
+ * Based on NetSpeed by Amir Hedayaty <hedayaty@gmail.com> (GPL-2.0-or-later)
  */
 
 import GObject from 'gi://GObject';

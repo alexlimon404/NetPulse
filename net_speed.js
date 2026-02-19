@@ -1,14 +1,11 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-FileCopyrightText: 2024 alexlimon404 <https://github.com/alexlimon404>
 /*
  * NetPulse - net_speed.js
  * Core logic: reads /proc/net/dev, calculates speeds, manages NetworkManager signals.
  *
- * Ported from NetSpeed by Amir Hedayaty to GNOME 45+ ES Modules API.
- * Changes vs original:
- *   - imports.xxx  → ES import
- *   - Lang.bind    → arrow functions
- *   - ByteArray    → TextDecoder
- *   - Mainloop     → GLib.timeout_add / GLib.source_remove
- *   - getCurrentExtension() → extension instance passed in constructor
+ * Based on NetSpeed by Amir Hedayaty <hedayaty@gmail.com> (GPL-2.0-or-later)
+ * Ported to GNOME 45+ ES Modules API.
  */
 
 import GLib from 'gi://GLib';
@@ -101,8 +98,11 @@ export class NetSpeed {
     _update_speeds() {
         this._status_icon.update_speeds(this._speeds);
         // force a redraw in the next frame (fixes occasional stale render)
-        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1, () => {
-            this._status_icon.queue_redraw();
+        // store the ID so disable() can cancel it before the callback fires
+        this._redrawId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1, () => {
+            this._redrawId = 0;
+            if (this._status_icon)
+                this._status_icon.queue_redraw();
             return GLib.SOURCE_REMOVE;
         });
     }
@@ -304,6 +304,11 @@ export class NetSpeed {
         if (this._timerid) {
             GLib.source_remove(this._timerid);
             this._timerid = 0;
+        }
+
+        if (this._redrawId) {
+            GLib.source_remove(this._redrawId);
+            this._redrawId = 0;
         }
 
         if (this._changed) {

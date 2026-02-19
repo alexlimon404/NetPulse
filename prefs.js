@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-FileCopyrightText: 2024 alexlimon404 <https://github.com/alexlimon404>
 /*
  * NetPulse - prefs.js
  * Preferences window using libadwaita (Adw), available since GNOME 45 / Ubuntu 24.04.
  *
- * Uses fillPreferencesWindow() — the modern approach for GNOME 45+ extensions.
+ * Based on NetSpeed by Amir Hedayaty <hedayaty@gmail.com> (GPL-2.0-or-later)
  */
 
 import Adw from 'gi://Adw';

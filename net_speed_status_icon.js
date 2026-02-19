@@ -1,12 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-FileCopyrightText: 2024 alexlimon404 <https://github.com/alexlimon404>
 /*
  * NetPulse - net_speed_status_icon.js
  * Panel button: speed labels, network icon, drop-down menu.
  *
- * Changes vs NetSpeed original:
- *   - ES imports
- *   - add_actor → add_child
- *   - Lang.bind → arrow functions
- *   - ExtensionUtils.openPrefs() → extension.openPreferences()
+ * Based on NetSpeed by Amir Hedayaty <hedayaty@gmail.com> (GPL-2.0-or-later)
  */
 
 import Clutter from 'gi://Clutter';
