@@ -1,0 +1,10 @@
+{
+  "name": "NetPulse",
+  "description": "Displays network upload and download speed in the GNOME panel",
+  "uuid": "netpulse@alexlimon404.github.com",
+  "version": 1,
+  "gettext-domain": "netpulse",
+  "settings-schema": "org.gnome.shell.extensions.netpulse",
+  "shell-version": ["45", "46", "47"],
+  "url": "https://github.com/alexlimon404/NetPulse"
+}

@@ -1,0 +1,31 @@
+/* NetPulse panel labels */
+
+.ns-horizontal-label {
+    text-align: right;
+}
+
+.ns-horizontal-unit-label {
+    font-size: 80%;
+}
+
+.ns-horizontal-icon {
+    text-align: left;
+}
+
+.ns-vertical-label {
+    font-size: 65%;
+    text-align: right;
+}
+
+.ns-vertical-unit-label {
+    font-size: 65%;
+}
+
+.ns-vertical-icon {
+    font-size: 65%;
+    text-align: left;
+}
+
+.ns-menuitem {
+    /* menu rows — add custom styles here if needed */
+}

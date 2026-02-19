@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="netpulse">
+  <schema id="org.gnome.shell.extensions.netpulse"
+          path="/org/gnome/shell/extensions/netpulse/">
+
+    <key name="icon-display" type="b">
+      <default>false</default>
+      <summary>Display icon</summary>
+      <description>Show the network type icon in the panel</description>
+    </key>
+
+    <key name="show-sum" type="b">
+      <default>false</default>
+      <summary>Show sum of upload and download speed</summary>
+      <description>If true shows combined UP+Down speed; otherwise shows them separately</description>
+    </key>
+
+    <key name="device" type="s">
+      <default>''</default>
+      <summary>Device to monitor</summary>
+      <description>Empty string or 'all' = all interfaces, 'defaultGW' = default gateway interface, or a specific interface name</description>
+    </key>
+
+    <key name="timer" type="i">
+      <default>1000</default>
+      <summary>Update interval in milliseconds</summary>
+      <description>How often the speed is recalculated</description>
+      <range min="100" max="10000"/>
+    </key>
+
+    <key name="digits" type="i">
+      <default>3</default>
+      <summary>Number of significant digits</summary>
+      <description>Minimum 3, maximum 10</description>
+      <range min="3" max="10"/>
+    </key>
+
+    <key name="label-size" type="i">
+      <default>38</default>
+      <summary>Width of the speed label in pixels</summary>
+    </key>
+
+    <key name="unit-label-size" type="i">
+      <default>28</default>
+      <summary>Width of the unit label in pixels</summary>
+    </key>
+
+    <key name="menu-label-size" type="i">
+      <default>65</default>
+      <summary>Width of the menu labels in pixels</summary>
+    </key>
+
+    <key name="use-bytes" type="b">
+      <default>false</default>
+      <summary>Use bytes per second</summary>
+      <description>Show B/s (bytes) when true, b/s (bits) when false</description>
+    </key>
+
+    <key name="bin-prefixes" type="b">
+      <default>false</default>
+      <summary>Use binary prefixes</summary>
+      <description>Show MiB/s, GiB/s when true; MB/s, GB/s when false</description>
+    </key>
+
+    <key name="vert-align" type="b">
+      <default>false</default>
+      <summary>Vertical layout</summary>
+      <description>Stack upload and download speeds on two rows</description>
+    </key>
+
+    <key name="placement" type="s">
+      <default>'right'</default>
+      <summary>Panel placement</summary>
+      <description>'right', 'center', or 'left'</description>
+    </key>
+
+    <key name="show-ips" type="b">
+      <default>false</default>
+      <summary>Show IP addresses</summary>
+      <description>Show IP addresses for each interface in the drop-down menu</description>
+    </key>
+
+  </schema>
+</schemalist>
