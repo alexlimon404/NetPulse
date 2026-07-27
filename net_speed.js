@@ -8,6 +8,7 @@
  * Ported to GNOME 45+ ES Modules API.
  */
 
+import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import NM from 'gi://NM';
@@ -15,6 +16,10 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import { NetSpeedStatusIcon } from './net_speed_status_icon.js';
+
+// All /proc reads go through the async GIO API — synchronous file I/O would
+// block the compositor thread (EGO review rule I-X-004).
+Gio._promisify(Gio.File.prototype, 'load_contents_async', 'load_contents_finish');
 
 export class NetSpeed {
     constructor(extension) {
@@ -124,10 +129,31 @@ export class NetSpeed {
 
     // ── /proc parsers ────────────────────────────────────────────────────────
 
-    _updateDefaultGw() {
-        const [ok, bytes] = GLib.file_get_contents('/proc/net/route');
-        if (!ok) return;
-        const lines = new TextDecoder().decode(bytes).split('\n');
+    /**
+     * Reads a file without blocking the main loop.
+     * Returns the decoded contents, or null on error / cancellation.
+     */
+    async _read_file(path) {
+        try {
+            const [bytes] = await Gio.File.new_for_path(path)
+                .load_contents_async(this._cancellable);
+            return new TextDecoder().decode(bytes);
+        } catch (e) {
+            if (!e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                console.error(`NetPulse: cannot read ${path}: ${e.message}`);
+            return null;
+        }
+    }
+
+    // true once disable() ran (or is running) — bail out after every await
+    _is_stale() {
+        return this._cancellable === null || this._cancellable.is_cancelled();
+    }
+
+    async _updateDefaultGw() {
+        const contents = await this._read_file('/proc/net/route');
+        if (contents === null) return;
+        const lines = contents.split('\n');
         for (const line of lines) {
             const params = line.replace(/^ */g, '').split('\t');
             if (params.length !== 11) continue;
@@ -136,13 +162,27 @@ export class NetSpeed {
         }
     }
 
-    _update() {
-        this._updateDefaultGw();
+    async _update() {
+        // a previous tick may still be waiting on I/O — skip this one
+        if (this._updating) return;
+        this._updating = true;
+        try {
+            await this._update_once();
+        } catch (e) {
+            console.error(`NetPulse: update failed: ${e.message}`);
+        } finally {
+            this._updating = false;
+        }
+    }
 
-        const [ok, bytes] = GLib.file_get_contents('/proc/net/dev');
-        if (!ok) return GLib.SOURCE_CONTINUE;
+    async _update_once() {
+        await this._updateDefaultGw();
+        if (this._is_stale()) return;
 
-        const lines = new TextDecoder().decode(bytes).split('\n');
+        const contents = await this._read_file('/proc/net/dev');
+        if (contents === null || this._is_stale()) return;
+
+        const lines = contents.split('\n');
 
         let totalUp = 0, totalDown = 0;
 
@@ -212,7 +252,6 @@ export class NetSpeed {
         }
 
         this._device_state_changed = false;
-        return GLib.SOURCE_CONTINUE;
     }
 
     // ── settings ─────────────────────────────────────────────────────────────
@@ -241,13 +280,21 @@ export class NetSpeed {
         this._saving = false;
     }
 
+    // The tick itself must stay synchronous (it has to return a GLib source
+    // constant), so the async update is only kicked off from it.
+    _start_timer(interval) {
+        this._timerid = GLib.timeout_add(GLib.PRIORITY_DEFAULT, interval, () => {
+            this._update();
+            return GLib.SOURCE_CONTINUE;
+        });
+    }
+
     _reload() {
         if (!this._setting) return;
         const m_timer = this._setting.get_int('timer');
         if (m_timer !== this.timer) {
             GLib.source_remove(this._timerid);
-            this._timerid = GLib.timeout_add(
-                GLib.PRIORITY_DEFAULT, m_timer, () => this._update());
+            this._start_timer(m_timer);
         }
         this._load();
         this._status_icon.updateui();
@@ -260,6 +307,8 @@ export class NetSpeed {
         this._device_state_changed = true;
         this._values  = [];
         this._devices = [];
+        this._updating    = false;
+        this._cancellable = new Gio.Cancellable();
 
         this._client     = NM.Client.new(null);
         this._nm_signals = [];
@@ -292,8 +341,7 @@ export class NetSpeed {
         this._updateDefaultGw();
 
         this._changed = this._setting.connect('changed', () => this._reload());
-        this._timerid = GLib.timeout_add(
-            GLib.PRIORITY_DEFAULT, this.timer, () => this._update());
+        this._start_timer(this.timer);
 
         this._status_icon = new NetSpeedStatusIcon(this, this._extension);
         const placement   = this._setting.get_string('placement');
@@ -301,6 +349,10 @@ export class NetSpeed {
     }
 
     disable() {
+        // aborts any in-flight /proc read; pending callbacks bail out on _is_stale()
+        this._cancellable?.cancel();
+        this._cancellable = null;
+
         if (this._timerid) {
             GLib.source_remove(this._timerid);
             this._timerid = 0;
